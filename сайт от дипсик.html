@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Магическая песочница | Интерактивный опыт</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* Улучшает UX для перетаскивания, но текст можно копировать */
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0a0f2c 0%, #0c1225 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+            padding: 20px;
+        }
+
+        /* главная карточка */
+        .magic-card {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(18, 25, 55, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 2rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #F0F3FF, #A5BBFF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+
+        .sub {
+            color: #9aa9d9;
+            margin-bottom: 2rem;
+            border-left: 3px solid #5f7ef2;
+            padding-left: 1rem;
+            font-weight: 400;
+        }
+
+        /* грид для виджетов */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.8rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .widget {
+            background: rgba(12, 18, 34, 0.7);
+            border-radius: 2rem;
+            padding: 1.4rem 1.5rem;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(95, 126, 242, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .widget:hover {
+            transform: translateY(-4px);
+            border-color: rgba(95, 126, 242, 0.7);
+            box-shadow: 0 18px 30px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .widget-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #dfe7ff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px dashed #2e3a6b;
+            padding-bottom: 8px;
+        }
+
+        /* часы */
+        .clock-face {
+            font-size: 3rem;
+            font-weight: 700;
+            font-family: monospace;
+            letter-spacing: 4px;
+            background: #01051480;
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            color: #bbd9ff;
+            text-shadow: 0 0 6px #3f6eff;
+        }
+
+        .date-style {
+            margin-top: 12px;
+            color: #8c9cd9;
+            font-weight: 500;
+        }
+
+        /* заметки */
+        .notes-input {
+            width: 100%;
+            background: #0b1022;
+            border: 1px solid #2e3f7a;
+            border-radius: 1.5rem;
+            padding: 12px 16px;
+            color: white;
+            font-size: 0.9rem;
+            resize: vertical;
+            font-family: inherit;
+            margin: 12px 0;
+        }
+
+        .notes-input:focus {
+            outline: none;
+            border-color: #6c8cff;
+            box-shadow: 0 0 0 2px #3f6eff40;
+        }
+
+        .save-btn, .action-btn {
+            background: linear-gradient(90deg, #2c3f8f, #1b2a62);
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 8px 18px;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            margin-right: 8px;
+            backdrop-filter: blur(4px);
+        }
+
+        .save-btn:hover, .action-btn:hover {
+            background: linear-gradient(90deg, #3f57b0, #2c3c82);
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .notes-display {
+            background: #03061770;
+            border-radius: 1rem;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            max-height: 130px;
+            overflow-y: auto;
+            color: #bfceff;
+        }
+
+        /* слайдер */
+        .slider-value {
+            background: #00000040;
+            padding: 4px 12px;
+            border-radius: 2rem;
+            display: inline-block;
+            margin-top: 12px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #c3dbff;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 12px 0;
+            -webkit-appearance: none;
+            background: #202c54;
+            height: 4px;
+            border-radius: 10px;
+        }
+
+        input[type="range"]:focus {
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #7d9eff;
+            cursor: pointer;
+            box-shadow: 0 0 5px #5f7eff;
+            border: none;
+        }
+
+        /* canvas арт */
+        .canvas-area {
+            background: #03061760;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        canvas {
+            background: #0c1126;
+            border-radius: 1.2rem;
+            display: block;
+            margin: 12px auto;
+            max-width: 100%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            cursor: crosshair;
+        }
+
+        .color-picker-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .color-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.5);
+            transition: 0.1s;
+        }
+
+        .color-dot.active {
+            transform: scale(1.2);
+            border: 2px solid white;
+            box-shadow: 0 0 8px white;
+        }
+
+        button.clear-canvas {
+            background: #4a1e5c;
+            margin-top: 8px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: #5c6faa;
+        }
+
+        @media (max-width: 680px) {
+            .magic-card {
+                padding: 1.2rem;
+            }
+            .clock-face {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="magic-card">
+    <h1>✨ Создатель реальностей</h1>
+    <div class="sub">интерактивная html-песочница • часы • заметки • генератор • рисование</div>
+
+    <div class="dashboard">
+        <!-- виджет 1: живые часы -->
+        <div class="widget">
+            <div class="widget-title">🕒 Магическое время</div>
+            <div class="clock-face" id="clock">--:--:--</div>
+            <div class="date-style" id="dateString"></div>
+            <div style="font-size:0.8rem; margin-top: 12px;">временной поток 🌙</div>
+        </div>
+
+        <!-- виджет 2: умные заметки с localStorage -->
+        <div class="widget">
+            <div class="widget-title">📜 Хранитель мыслей</div>
+            <textarea class="notes-input" id="noteInput" rows="2" placeholder="Напишите что-нибудь..."></textarea>
+            <button class="save-btn" id="saveNoteBtn">💾 Сохранить заметку</button>
+            <button class="action-btn" id="clearNotesBtn">🗑️ Очистить всё</button>
+            <div class="notes-display" id="notesList">
+                <em style="opacity:0.7;">✦ здесь будут ваши идеи</em>
+            </div>
+        </div>
+
+        <!-- виджет 3: динамический слайдер + магия чисел -->
+        <div class="widget">
+            <div class="widget-title">🌀 Сила числа</div>
+            <input type="range" id="magicSlider" min="0" max="100" value="42">
+            <div class="slider-value" id="sliderValueDisplay">значение: 42</div>
+            <div id="magicMessage" style="margin-top: 12px; font-style:italic; color:#b7c3ff;">✨ выбери свою силу</div>
+        </div>
+
+        <!-- виджет 4: маленький генератор случайностей -->
+        <div class="widget">
+            <div class="widget-title">🎲 Оракул случайностей</div>
+            <button class="action-btn" id="randomFactBtn">✨ Предсказание</button>
+            <button class="action-btn" id="randomColorBtn">🎨 Цвет судьбы</button>
+            <div id="oracleOutput" style="margin-top: 14px; background:#00000030; padding: 8px; border-radius: 1rem; font-size:0.9rem;">
+                нажми на предсказание
+            </div>
+        </div>
+    </div>
+
+    <!-- рисовалка + интерактивный холст -->
+    <div class="widget" style="margin-top: 0.2rem;">
+        <div class="widget-title">🎨 Магия линий (рисование)</div>
+        <div class="canvas-area">
+            <canvas id="drawCanvas" width="500" height="220" style="width:100%; height:auto; max-width:500px; aspect-ratio:500/220"></canvas>
+            <div class="color-picker-row" id="colorPalette">
+                <div class="color-dot" style="background:#FFD966;" data-color="#FFD966"></div>
+                <div class="color-dot" style="background:#6C9EFF;" data-color="#6C9EFF"></div>
+                <div class="color-dot" style="background:#FF6B8B;" data-color="#FF6B8B"></div>
+                <div class="color-dot" style="background:#AB8EFF;" data-color="#AB8EFF"></div>
+                <div class="color-dot" style="background:#FFFFFF;" data-color="#FFFFFF"></div>
+                <div class="color-dot" style="background:#3BC14A;" data-color="#3BC14A"></div>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 12px;">
+                <button class="action-btn clear-canvas" id="clearCanvasBtn">🧽 Очистить холст</button>
+                <button class="action-btn" id="downloadCanvasBtn">📸 Скачать рисунок</button>
+            </div>
+            <div style="font-size:0.7rem; margin-top: 8px;">⋆ рисовать можно мышкой или пальцем ⋆</div>
+        </div>
+    </div>
+
+    <footer>
+        🌟 интерактивная html-страница — полёт фантазии • все данные сохраняются локально (заметки)
+    </footer>
+</div>
+
+<script>
+    (function(){
+        // ---------- 1. ЧАСЫ РЕАЛЬНОГО ВРЕМЕНИ ----------
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute:'2-digit', second:'2-digit' });
+            const dateStr = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('clock').innerText = timeStr;
+            document.getElementById('dateString').innerHTML = `📅 ${dateStr}`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // ---------- 2. ЗАМЕТКИ (localStorage) ----------
+        let notesArray = [];
+        const notesInput = document.getElementById('noteInput');
+        const notesListDiv = document.getElementById('notesList');
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const clearNotesBtn = document.getElementById('clearNotesBtn');
+
+        function loadNotes() {
+            const stored = localStorage.getItem('magic_notes');
+            if(stored) {
+                try {
+                    notesArray = JSON.parse(stored);
+                } catch(e) { notesArray = []; }
+            } else {
+                notesArray = ["💡 привет! это демо-заметка", "✨ можно добавлять свои идеи"];
+            }
+            renderNotes();
+        }
+
+        function renderNotes() {
+            if(notesArray.length === 0) {
+                notesListDiv.innerHTML = '<em style="opacity:0.7;">✏️ пока нет заметок, создай первую!</em>';
+                return;
+            }
+            let html = '';
+            notesArray.slice().reverse().forEach((note, idx) => {
+                const displayNote = note.length > 80 ? note.slice(0,80)+'...' : note;
+                html += `<div style="border-bottom:1px solid #2a3466; padding:6px 0;">📌 ${escapeHtml(displayNote)}</div>`;
+            });
+            notesListDiv.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
+
+        function addNote(text) {
+            if(!text.trim()) return;
+            notesArray.unshift(text.trim());
+            if(notesArray.length > 15) notesArray.pop();
+            localStorage.setItem('magic_notes', JSON.stringify(notesArray));
+            renderNotes();
+        }
+
+        function clearAllNotes() {
+            notesArray = [];
+            localStorage.setItem('magic_notes', JSON.stringify(notesArray));
+            renderNotes();
+        }
+
+        saveNoteBtn.addEventListener('click', () => {
+            const newNote = notesInput.value;
+            if(newNote.trim() !== "") {
+                addNote(newNote);
+                notesInput.value = '';
+            } else {
+                alert("напиши что-нибудь волшебное ✨");
+            }
+        });
+        clearNotesBtn.addEventListener('click', () => {
+            if(confirm("Удалить все заметки навсегда?")) {
+                clearAllNotes();
+            }
+        });
+        loadNotes();
+
+        // ---------- 3. СЛАЙДЕР + МАГИЧЕСКОЕ СООБЩЕНИЕ ----------
+        const slider = document.getElementById('magicSlider');
+        const sliderValSpan = document.getElementById('sliderValueDisplay');
+        const magicMsg = document.getElementById('magicMessage');
+        function updateSlider() {
+            const val = slider.value;
+            sliderValSpan.innerText = `значение: ${val}`;
+            if(val < 30) magicMsg.innerHTML = "🌙 тихая энергия... спокойствие";
+            else if(val < 70) magicMsg.innerHTML = "⚡️ баланс сил, искры вдохновения";
+            else magicMsg.innerHTML = "🔥 абсолютная мощь! ты создаёшь реальность!";
+        }
+        slider.addEventListener('input', updateSlider);
+        updateSlider();
+
+        // ---------- 4. ОРАКУЛ (рандомные фразы и цвет) ----------
+        const randomFactBtn = document.getElementById('randomFactBtn');
+        const randomColorBtn = document.getElementById('randomColorBtn');
+        const oracleOutput = document.getElementById('oracleOutput');
+
+        const facts = [
+            "🌟 Ты способен на невероятное.", "🌀 Луна сегодня на твоей стороне.", "🎨 Внутри тебя скрыт целый мир.", 
+            "📖 Следующая глава будет яркой.", "✨ Жди неожиданного подарка.", "💎 Твой код — это искусство.", 
+            "🌊 Позволь идеям течь свободно.", "🔮 Число удачи: 42 (всегда)."
+        ];
+        randomFactBtn.addEventListener('click', () => {
+            const randomIndex = Math.floor(Math.random() * facts.length);
+            oracleOutput.innerHTML = `🔮 предсказание: ${facts[randomIndex]}`;
+        });
+        randomColorBtn.addEventListener('click', () => {
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
+            oracleOutput.innerHTML = `🎨 цвет судьбы: <span style="background:${randomColor}; padding:2px 10px; border-radius:20px; color:white;">${randomColor}</span>`;
+        });
+
+        // ---------- 5. РИСОВАЛКА (canvas) ----------
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let painting = false;
+        let currentColor = '#FFD966';
+        let lastX = 0, lastY = 0;
+
+        function resizeCanvasResolution() {
+            // фикс ретины? canvas размеры из атрибутов width/height уже заданы, просто стили не ломают логику.
+            // координаты мыши относительно canvas
+        }
+
+        function getMouseCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;   // canvas реальные пиксели (500) / отображаемая ширина
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if(e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
+            canvasX = Math.min(Math.max(0, canvasX), canvas.width);
+            canvasY = Math.min(Math.max(0, canvasY), canvas.height);
+            return { x: canvasX, y: canvasY };
+        }
+
+        function startDraw(e) {
+            painting = true;
+            const coords = getMouseCoords(e);
+            lastX = coords.x;
+            lastY = coords.y;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(lastX, lastY);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            e.preventDefault();
+        }
+
+        function draw(e) {
+            if(!painting) return;
+            e.preventDefault();
+            const coords = getMouseCoords(e);
+            const currentX = coords.x;
+            const currentY = coords.y;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(currentX, currentY);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        function stopDraw() {
+            painting = false;
+            ctx.beginPath();
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseleave', stopDraw);
+        // touch events
+        canvas.addEventListener('touchstart', startDraw);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDraw);
+
+        // выбор цвета
+        const colorDots = document.querySelectorAll('.color-dot');
+        colorDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                currentColor = dot.getAttribute('data-color');
+                colorDots.forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+            });
+        });
+        // по умолчанию активируем первый
+        if(colorDots.length) colorDots[0].classList.add('active');
+
+        // очистка canvas
+        const clearCanvasBtn = document.getElementById('clearCanvasBtn');
+        clearCanvasBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0c1126';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+        // заливка начальным фоном
+        ctx.fillStyle = '#0c1126';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // скачать canvas как png
+        const downloadBtn = document.getElementById('downloadCanvasBtn');
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'magic_drawing.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+        
+        // для дополнительной магии: показываем рандомный факт при загрузке
+        setTimeout(() => {
+            oracleOutput.innerHTML = `✨ добро пожаловать в твою вселенную ✨`;
+        }, 100);
+    })();
+</script>
+</body>
+</html>
